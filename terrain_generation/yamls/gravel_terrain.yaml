@@ -1,0 +1,15 @@
+template_file: "template_terrain_fixed.xml"
+output_file: "gravel_path_terrain.xml"
+type_of_terrain: fixed 
+
+parameters:
+  n: 1500
+  size_range: [0.003, 0.008]
+  mass_range: [0.1, 0.5]
+  scatter_range: [-0.5, 0.5]
+  height_range: [0, 0.005]
+  quat_range: [0, 1]
+  rock_type: "box"
+  sliding_friction_range: [0.5, 0.7]
+  torsional_friction_range: [0.7, 0.85]
+  rolling_friction_range: [0.6, 0.75]

@@ -1,0 +1,28 @@
+# This is the NAME of the template file we build upon. Must be in 
+# template terrains
+template_file: "template_terrain_fixed.xml"  
+
+# This is the name of our output terrain. It gets placed in the saved_terrains directory
+output_file: "my_fixed_terrain.xml"
+
+#Type of terrain. Options: fixed | movable | sloped
+type_of_terrain: fixed 
+
+#True/False. this is an extra parameter that allows us to instad save in the experiment directories's terrain models.
+#TLDR: You don't have to move the terrain you generated to terrain_models everytime.
+save_in_terrain_models: True 
+
+
+#These are the paramters we set. If not specified, it will use the default values
+parameters:
+  n: 2000  # Number of rocks to make
+  size_range: [0.005, 0.015]  # Size
+  mass_range: [0.1,  0.5]
+  scatter_range: [-0.5, 0.5]  # Grid area over which the rocks are scattered
+  height_range: [0, 0.015]  # Heights at which the rocks are placed
+  quat_range: [0, 1]  # Rotation angles of the rocks
+  rock_type: "box"  # Type of rock shape
+  sliding_friction_range: [0.7, 0.8]
+  torsional_friction_range: [0.9, 1]
+  rolling_friction_range: [0.8, 0.9]
+  

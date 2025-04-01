@@ -1,0 +1,15 @@
+template_file: "template_terrain_fixed.xml"
+output_file: "boulder_field_terrain.xml"
+type_of_terrain: fixed 
+
+parameters:
+  n: 800
+  size_range: [0.04, 0.07]
+  mass_range: [0.1, 0.5]
+  scatter_range: [-5, 5]
+  height_range: [0.02, 0.06]
+  quat_range: [0, 1]
+  rock_type: "box"
+  sliding_friction_range: [0.75, 0.9]
+  torsional_friction_range: [0.85, 1.0]
+  rolling_friction_range: [0.8, 0.95]
