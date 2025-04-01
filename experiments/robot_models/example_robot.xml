@@ -1,0 +1,140 @@
+<mujoco model="urdf_turtle_v2">
+  <compiler angle="radian"/>
+  <option solver="Newton" tolerance="1e-6" integrator="implicitfast"/>
+
+  <asset>
+    <texture builtin="checker" height="100" name="texplane" rgb1="0.5 0.5 0.5" rgb2="0.8 0.8 0.8" type="2d" width="100"/>
+    <material name="MatPlane" reflectance="0.5" shininess="1" specular="1" texrepeat="15 15" texture="texplane"/>
+  </asset>
+
+  <worldbody>
+      
+    <light cutoff="100" diffuse="1 1 1" dir="-0 0 -1.3" directional="true" exponent="1" pos="0 0 1.3" specular=".1 .1 .1"/>
+
+    <!-- Flat Terrain -->
+    <geom name="floor" type="plane" material="MatPlane" size="1.2 1.2 0.1" pos="0 0 0" rgba="0.8 0.9 0.8 1" friction="1.0 5 0.5" solref="0.02 1" solimp="0.9 0.95 0.001"/>
+    <!-- Base body with a free joint -->
+    <body name="base" pos="0 0 0.2" >
+      <joint name="base_free" type="free" frictionloss="0.1"/>
+      <geom type="mesh" rgba="0.752941 0.752941 0.752941 1" mesh="base_link" friction="1.0 0.5 0.5" solref="0.02 1" solimp="0.9 0.95 0.001"/>
+
+      <!-- Back Right Link -->
+      <body name="backrightlink" pos="-0.044464 -0.015725 -0.023608" quat="0.820538 0.273512 -0.158716 -0.476149">
+        <inertial pos="-0.000230498 -0.0259489 0.0454514" quat="0.628624 0.777697 -0.00340079 -0.00280565" mass="0.00735328" diaginertia="2.06921e-06 1.28265e-06 8.58253e-07"/>
+        <joint name="backrightjoint" type="hinge" pos="0 0 0" axis="0 0 1" range="-0.65 1.571" actuatorfrcrange="-0.42 0.42" frictionloss="0.1"/>
+        <geom type="mesh" rgba="1 0 0 1" mesh="backrightlink" friction="1.0 0.5 0.5" solref="0.02 1" solimp="0.9 0.95 0.001"/>
+      </body>
+
+      <!-- Back Left Link -->
+      <body name="backleftlink" pos="-0.058724 0.022973 -0.0023055" quat="0.476146 0.158715 -0.273513 -0.82054">
+        <inertial pos="3.53889e-05 -0.0259499 0.0196231" quat="0.62863 0.777704 0.000583499 0.000414911" mass="0.00735328" diaginertia="2.06921e-06 1.28265e-06 8.58253e-07"/>
+        <joint name="backleftjoint" type="hinge" pos="0 0 0" axis="0 0 1" range="-1.571 0.65" actuatorfrcrange="-0.42 0.42" frictionloss="0.1"/>
+        <geom type="mesh" rgba="1 0 0 1" mesh="backleftlink" friction="1.0 0.5 0.5" solref="0.02 1" solimp="0.9 0.95 0.001"/>
+      </body>
+
+      <!-- Front Right Hip Link -->
+      <body name="frontrighthiplink" pos="0.088599 0.007262 0.02" quat="0.613891 0.35091 -0.613893 0.350907">
+        <inertial pos="0.000477612 -0.0269624 0.0548139" quat="0.990877 -0.125716 -0.000887173 -0.0485622" mass="0.0214873" diaginertia="3.29218e-06 2.49101e-06 2.10494e-06"/>
+        <joint name="frontrighthipjoint" type="hinge" pos="0 0 0" axis="0 -5.7115e-05 1" range="-1.22 1.571" actuatorfrcrange="-0.42 0.42" frictionloss="0.1"/>
+        <geom type="mesh" rgba="0.752941 0.752941 0.752941 1" mesh="frontrighthiplink" friction="1.0 0.5 0.5" solref="0.02 1" solimp="0.9 0.95 0.001"/>
+        <body name="frontrightflipperlink" pos="-0.011447 -0.026757 0.064797" quat="0.00296594 0.707095 0.00410249 0.707101">
+          <inertial pos="0.0627381 0.0025922 0.0125462" quat="0.501508 0.494858 0.498397 0.505179" mass="0.0291756" diaginertia="2.30001e-05 1.95463e-05 3.82772e-06"/>
+          <joint name="frontrightflipperjoint" type="hinge" pos="0 0 0" axis="0 0 1" range="-0.64 1.571" actuatorfrcrange="-0.42 0.42" frictionloss="0.1"/>
+          <geom type="mesh" rgba="1 0 0 1" mesh="frontrightflipperlink" friction="1.0 0.5 0.5" solref="0.02 1" solimp="0.9 0.95 0.001"/>
+        </body>
+      </body>
+
+      <!-- Front Left Hip Link -->
+      <body name="frontlefthiplink" pos="0.072097 0.02037 0.018766" quat="0.68222 -0.682222 -0.185942 0.185941">
+        <inertial pos="0.0271358 -0.00074823 0.0228334" quat="0.73992 -0.0891628 -0.0922786 0.660343" mass="0.0214873" diaginertia="3.29236e-06 2.49208e-06 2.10369e-06"/>
+        <joint name="frontlefthipjoint" type="hinge" pos="0 0 0" axis="0 0 -1" range="-1.571 1.22" actuatorfrcrange="-0.42 0.42" frictionloss="0.1"/>
+        <geom type="mesh" rgba="0.752941 0.752941 0.752941 1" mesh="frontlefthiplink" friction="1.0 0.5 0.5" solref="0.02 1" solimp="0.9 0.95 0.001"/>
+        <body name="frontleftflipperlink" pos="0.029345 -0.0003733 0.032817" quat="0.496813 0.503165 -0.496815 0.503167">
+          <inertial pos="0.0590079 -0.000759462 0.000119837" quat="0.506667 0.499947 0.493291 0.500005" mass="0.0291756" diaginertia="2.30001e-05 1.95463e-05 3.82772e-06"/>
+          <joint name="frontleftflipperjoint" type="hinge" pos="0 0 0" axis="0 0 1" range="-1.571 0.64" actuatorfrcrange="-0.42 0.42" frictionloss="0.1"/>
+          <geom type="mesh" rgba="1 0 0 1" mesh="frontleftflipperlink" friction="1.0 0.5 0.5" solref="0.02 1" solimp="0.9 0.95 0.001"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <!-- Position control actuators -->
+    <position name="pos_backright" joint="backrightjoint" ctrlrange="-0.524 1.571" kp="2"/>
+    <position name="pos_backleft" joint="backleftjoint" ctrlrange="-1.571 0.524" kp="2"/>
+    <position name="pos_frontrighthip" joint="frontrighthipjoint" ctrlrange="-1.22 1.571" kp="2"/>
+    <position name="pos_frontrightflipper" joint="frontrightflipperjoint" ctrlrange="-0.64 1.571" kp="2"/>
+    <position name="pos_frontlefthip" joint="frontlefthipjoint" ctrlrange="-1.571 1.22" kp="2"/>
+    <position name="pos_frontleftflipper" joint="frontleftflipperjoint" ctrlrange="-1.571 0.64" kp="2"/>
+
+    <!-- Velocity control actuators -->
+    <velocity name="vel_backright" joint="backrightjoint" ctrlrange="-0.42 0.42" kv="2"/>
+    <velocity name="vel_backleft" joint="backleftjoint" ctrlrange="-0.42 0.42" kv="2"/>
+    <velocity name="vel_frontrighthip" joint="frontrighthipjoint" ctrlrange="-0.42 0.42" kv="2"/>
+    <velocity name="vel_frontrightflipper" joint="frontrightflipperjoint" ctrlrange="-0.42 0.42" kv="2"/>
+    <velocity name="vel_frontlefthip" joint="frontlefthipjoint" ctrlrange="-0.42 0.42" kv="2"/>
+    <velocity name="vel_frontleftflipper" joint="frontleftflipperjoint" ctrlrange="-0.42 0.42" kv="2"/>
+  </actuator>
+
+  <!-- SENSORS -->
+  <sensor>
+    <!-- Joint position and velocity sensors for each hinge -->
+    <jointpos name="sens_backright_pos" joint="backrightjoint"/>
+    <jointvel name="sens_backright_vel" joint="backrightjoint"/>
+
+    <jointpos name="sens_backleft_pos" joint="backleftjoint"/>
+    <jointvel name="sens_backleft_vel" joint="backleftjoint"/>
+
+    <jointpos name="sens_frontrighthip_pos" joint="frontrighthipjoint"/>
+    <jointvel name="sens_frontrighthip_vel" joint="frontrighthipjoint"/>
+
+    <jointpos name="sens_frontrightflipper_pos" joint="frontrightflipperjoint"/>
+    <jointvel name="sens_frontrightflipper_vel" joint="frontrightflipperjoint"/>
+
+    <jointpos name="sens_frontlefthip_pos" joint="frontlefthipjoint"/>
+    <jointvel name="sens_frontlefthip_vel" joint="frontlefthipjoint"/>
+
+    <jointpos name="sens_frontleftflipper_pos" joint="frontleftflipperjoint"/>
+    <jointvel name="sens_frontleftflipper_vel" joint="frontleftflipperjoint"/>
+
+    <!-- Measure actuator forces (e.g., torque for hinge joints) -->
+    <actuatorfrc name="sens_force_backright" actuator="pos_backright"/>
+    <actuatorfrc name="sens_force_backleft" actuator="pos_backleft"/>
+    <actuatorfrc name="sens_force_frontrighthip" actuator="pos_frontrighthip"/>
+    <actuatorfrc name="sens_force_frontrightflipper" actuator="pos_frontrightflipper"/>
+    <actuatorfrc name="sens_force_frontlefthip" actuator="pos_frontlefthip"/>
+    <actuatorfrc name="sens_force_frontleftflipper" actuator="pos_frontleftflipper"/>
+
+    <!-- Torque sensors: measure total actuator contribution at each hinge (jointactuatorfrc) -->
+    <jointactuatorfrc name="sens_jointactfrc_backright" joint="backrightjoint"/>
+    <jointactuatorfrc name="sens_jointactfrc_backleft" joint="backleftjoint"/>
+    <jointactuatorfrc name="sens_jointactfrc_frontrighthip" joint="frontrighthipjoint"/>
+    <jointactuatorfrc name="sens_jointactfrc_frontrightflipper" joint="frontrightflipperjoint"/>
+    <jointactuatorfrc name="sens_jointactfrc_frontlefthip" joint="frontlefthipjoint"/>
+    <jointactuatorfrc name="sens_jointactfrc_frontleftflipper" joint="frontleftflipperjoint"/>
+
+
+    <!-- Track the subtree center of mass of the base -->
+    <subtreecom name="sens_com_robot" body="base"/>
+
+    <!-- Track global position/orientation of the base body
+         framepos: x,y,z in world coords
+         framequat: w,x,y,z quaternion in world coords -->
+    <framepos name="sens_base_pos" objtype="body" objname="base"/>
+    <framequat name="sens_base_quat" objtype="body" objname="base"/>
+
+    <!-- Gyro (angular velocity) and accelerometer (linear acceleration) for base body -->
+    <frameangvel name="sens_base_gyro" objtype="body" objname="base"/>
+    <framelinacc name="sens_base_acc" objtype="body" objname="base"/>
+
+    <!-- Additional sensors you can add:
+         framexaxis / frameyaxis / framezaxis
+         subtreelinvel / subtreeangmom
+         bodycinert / tendonpos / etc.
+         For full list, see:
+         https://mujoco.readthedocs.io/en/latest/XMLreference.html#sensor
+    -->
+  </sensor>
+
+
+</mujoco>

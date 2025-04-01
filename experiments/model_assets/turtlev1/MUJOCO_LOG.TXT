@@ -1,0 +1,99 @@
+Fri Feb 14 15:45:50 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0240.
+
+Fri Feb 14 15:46:09 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0240.
+
+Mon Feb 17 19:44:40 2025
+WARNING: Insufficient arena memory for the number of constraints generated. Increase arena memory allocation above 126M bytes. Time = 0.0000.
+
+Tue Feb 18 14:14:22 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 14. The simulation is unstable. Time = 0.0040.
+
+Tue Feb 18 14:15:17 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 26. The simulation is unstable. Time = 0.0040.
+
+Tue Feb 18 14:19:57 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0000.
+
+Tue Feb 18 14:19:57 2025
+WARNING: Nan, Inf or huge value in QPOS at DOF 0. The simulation is unstable. Time = 0.0020.
+
+Tue Feb 18 14:19:58 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0000.
+
+Tue Feb 18 14:19:58 2025
+WARNING: Nan, Inf or huge value in QPOS at DOF 0. The simulation is unstable. Time = 0.0020.
+
+Tue Feb 18 14:19:58 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0000.
+
+Tue Feb 18 14:19:59 2025
+WARNING: Nan, Inf or huge value in QPOS at DOF 0. The simulation is unstable. Time = 0.0020.
+
+Tue Feb 18 14:19:59 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0000.
+
+Tue Feb 18 14:19:59 2025
+WARNING: Nan, Inf or huge value in QPOS at DOF 0. The simulation is unstable. Time = 0.0020.
+
+Tue Feb 18 14:19:59 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0000.
+
+Tue Feb 18 14:20:00 2025
+WARNING: Nan, Inf or huge value in QPOS at DOF 0. The simulation is unstable. Time = 0.0020.
+
+Tue Feb 18 14:20:00 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0000.
+
+Tue Feb 18 14:20:01 2025
+WARNING: Nan, Inf or huge value in QPOS at DOF 0. The simulation is unstable. Time = 0.0020.
+
+Tue Feb 18 14:20:02 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0000.
+
+Tue Feb 18 14:20:02 2025
+WARNING: Nan, Inf or huge value in QPOS at DOF 0. The simulation is unstable. Time = 0.0020.
+
+Tue Feb 18 14:20:02 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0000.
+
+Tue Feb 18 14:20:03 2025
+WARNING: Nan, Inf or huge value in QPOS at DOF 0. The simulation is unstable. Time = 0.0020.
+
+Tue Feb 18 14:20:04 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0000.
+
+Tue Feb 18 14:20:04 2025
+WARNING: Nan, Inf or huge value in QPOS at DOF 0. The simulation is unstable. Time = 0.0020.
+
+Tue Feb 18 14:20:04 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0000.
+
+Tue Feb 18 14:20:04 2025
+WARNING: Nan, Inf or huge value in QPOS at DOF 0. The simulation is unstable. Time = 0.0020.
+
+Tue Feb 18 14:20:05 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.0000.
+
+Tue Feb 18 14:22:11 2025
+WARNING: Too many contacts. Either the arena memory is full, or nconmax is specified and is exceeded. Increase arena memory allocation, or increase/remove nconmax. (ncon = 56996) Time = 0.0000.
+
+Tue Feb 18 14:22:11 2025
+WARNING: Insufficient arena memory for the number of constraints generated. Increase arena memory allocation above 100M bytes. Time = 0.0000.
+
+Tue Feb 18 14:22:26 2025
+WARNING: Too many contacts. Either the arena memory is full, or nconmax is specified and is exceeded. Increase arena memory allocation, or increase/remove nconmax. (ncon = 421085) Time = 0.0000.
+
+Tue Feb 18 14:22:27 2025
+WARNING: Insufficient arena memory for the number of constraints generated. Increase arena memory allocation above 300M bytes. Time = 0.0000.
+
+Tue Feb 18 14:22:41 2025
+WARNING: Insufficient arena memory for the number of constraints generated. Increase arena memory allocation above 1000M bytes. Time = 0.0000.
+
+Tue Feb 18 14:31:00 2025
+WARNING: Too many contacts. Either the arena memory is full, or nconmax is specified and is exceeded. Increase arena memory allocation, or increase/remove nconmax. (ncon = 56996) Time = 0.0000.
+
+Tue Feb 18 14:31:00 2025
+WARNING: Insufficient arena memory for the number of constraints generated. Increase arena memory allocation above 100M bytes. Time = 0.0000.
+

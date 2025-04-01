@@ -1,0 +1,96 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mujoco model="salamander_description">
+  <include file="C:\Users\kevin\college_classes\SophomoreSpring\MiniRO\mujoco_box\assets\experiments\setup\../terrain_models\sloped_terrain.xml" /><compiler angle="radian" />
+  <option solver="Newton" tolerance="1e-6" integrator="implicitfast" gravity="0 0 -9.81" />
+  <include file="act2.xml" />
+  
+  
+  <visual>
+    <rgba haze="0.15 0.25 0.35 1" />
+    <quality shadowsize="4096" />
+    <map stiffness="700" shadowscale="0.5" fogstart="1" fogend="15" zfar="40" haze="1" />
+  </visual>
+  
+  <asset>
+
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512" />
+    <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512" height="512" mark="cross" markrgb=".8 .8 .8" />
+    <material name="matplane" reflectance="0.3" texture="texplane" texrepeat="10 10" texuniform="true" />
+    <material name="slope_mat" reflectance="0.3" rgba="1 1 0 .25" />
+    
+    
+  <mesh file="C:\Users\kevin\college_classes\SophomoreSpring\MiniRO\mujoco_box\assets\experiments\setup\..\model_assets\salamander\meshes\body_front_link.STL" name="body_front_link" /><mesh file="C:\Users\kevin\college_classes\SophomoreSpring\MiniRO\mujoco_box\assets\experiments\setup\..\model_assets\salamander\meshes\body_rear_link.STL" name="body_rear_link" /><mesh file="C:\Users\kevin\college_classes\SophomoreSpring\MiniRO\mujoco_box\assets\experiments\setup\..\model_assets\salamander\meshes\dummy_base_link.STL" name="dummy_base_link" /><mesh file="C:\Users\kevin\college_classes\SophomoreSpring\MiniRO\mujoco_box\assets\experiments\setup\..\model_assets\salamander\meshes\leg1_link.STL" name="leg1_link" /><mesh file="C:\Users\kevin\college_classes\SophomoreSpring\MiniRO\mujoco_box\assets\experiments\setup\..\model_assets\salamander\meshes\leg2_link.STL" name="leg2_link" /><mesh file="C:\Users\kevin\college_classes\SophomoreSpring\MiniRO\mujoco_box\assets\experiments\setup\..\model_assets\salamander\meshes\leg3_link.STL" name="leg3_link" /><mesh file="C:\Users\kevin\college_classes\SophomoreSpring\MiniRO\mujoco_box\assets\experiments\setup\..\model_assets\salamander\meshes\leg4_link.STL" name="leg4_link" /><mesh file="C:\Users\kevin\college_classes\SophomoreSpring\MiniRO\mujoco_box\assets\experiments\setup\..\model_assets\salamander\meshes\shoulder1_link.STL" name="shoulder1_link" /><mesh file="C:\Users\kevin\college_classes\SophomoreSpring\MiniRO\mujoco_box\assets\experiments\setup\..\model_assets\salamander\meshes\shoulder2_link.STL" name="shoulder2_link" /><mesh file="C:\Users\kevin\college_classes\SophomoreSpring\MiniRO\mujoco_box\assets\experiments\setup\..\model_assets\salamander\meshes\shoulder3_link.STL" name="shoulder3_link" /><mesh file="C:\Users\kevin\college_classes\SophomoreSpring\MiniRO\mujoco_box\assets\experiments\setup\..\model_assets\salamander\meshes\shoulder4_link.STL" name="shoulder4_link" /></asset>
+
+  <worldbody>
+    <body name="ball" pos="1 0 .04">
+      <geom type="sphere" size=".04" rgba="1 0 0 1" />
+    </body>
+    <light diffuse=".4 .4 .4" specular="0.1 0.1 0.1" pos="0 0 2.0" dir="0 0 -1" castshadow="false" />
+    <light directional="true" diffuse=".8 .8 .8" specular="0.2 0.2 0.2" pos="0 0 4" dir="0 0 -1" />
+    <geom name="ground" type="plane" size="0 0 1" pos="0 0 0" quat="1 0 0 0" material="matplane" condim="1" />
+    
+    
+    <body name="body_rear_link" pos="0 0 0.0856">
+      <geom pos="0 0 0.0856" quat="1 0 0 0" type="mesh" mesh="body_rear_link" />
+      <joint name="fall" type="free" pos="0 0 0" axis="0 0 1" />
+      <site name="torso_sensors" pos="-0.0682 0 .048" rgba="0.5 0 0 .5" />
+      <body name="shoulder3_link" pos="-0.10533 0.043967 0.0784">
+        <geom type="mesh" rgba="0.75294 0.75294 0.75294 1" mesh="shoulder3_link" />
+        <inertial pos="-0.00035612 0.027895 -0.015524" quat="0.830241 0.554769 0.0182893 0.0509566" mass="0.022828" diaginertia="3.78438e-06 3.41587e-06 3.14145e-06" />
+        <joint name="shoulder3_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-1.4 1.4" actuatorfrcrange="-0.39 0.39" frictionloss="0.1" />
+        <body name="leg3_link" pos="-0.0174 0.041 -0.0164">
+          <inertial pos="0.015303 -0.0075022 -0.031486" quat="0.991718 -0.121381 -0.0411625 0.00821591" mass="0.01174" diaginertia="4.05823e-06 3.86047e-06 1.0964e-06" />
+          <joint name="leg3_joint" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.6" actuatorfrcrange="-0.39 0.39" frictionloss="0.1" />
+          <geom type="mesh" rgba="0.10196 0.10196 0.10196 1" mesh="leg3_link" />
+        </body>
+      </body>
+      <body name="shoulder4_link" pos="-0.10533 -0.044033 0.0784">
+        <inertial pos="-0.00035261 -0.027895 -0.015524" quat="0.55469 0.830308 -0.0504036 -0.0191768" mass="0.022828" diaginertia="3.78439e-06 3.41596e-06 3.14135e-06" />
+        <joint name="shoulder4_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-1.4 1.4" actuatorfrcrange="-0.39 0.39" frictionloss="0.1" />
+        <geom type="mesh" rgba="0.75294 0.75294 0.75294 1" mesh="shoulder4_link" />
+        <body name="leg4_link" pos="-0.0174 -0.041 -0.0164">
+          <inertial pos="0.015303 0.0075097 -0.031486" quat="0.991713 0.121232 -0.0407594 -0.0121008" mass="0.01174" diaginertia="4.05702e-06 3.85955e-06 1.09592e-06" />
+          <joint name="leg4_joint" type="hinge" pos="0 0 0" axis="1 0 0" range="-1.6 0" actuatorfrcrange="-0.39 0.39" frictionloss="0.1" />
+          <geom type="mesh" rgba="0.10196 0.10196 0.10196 1" mesh="leg4_link" />
+        </body>
+      </body>
+      <body name="body_front_link" pos="0.0185 0 0.0881">
+        <site name="spinal_sensors" pos="-0.0182 0 0" rgba="0 0 0 .5" />
+        <site name="front_sensors" pos="0.0682 0 -.04" rgba="0.5 0 0 .5" />
+        <inertial pos="0.056805 2.3159e-05 -0.033606" quat="0.4638 0.4638 -0.53375 0.53375" mass="0.081874" diaginertia="3.73585e-05 2.58825e-05 1.9334e-05" />
+        <joint name="spinal_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-1.5707 1.5707" actuatorfrcrange="-1.52 1.52" frictionloss="0.5" />
+        <geom type="mesh" mesh="body_front_link" />
+        <site name="tip_sensors" pos="0.09 0 -0.033" />
+        <body name="shoulder1_link" pos="0.073327 0.044033 -0.0097">
+          <inertial pos="-0.00035612 0.027895 -0.015524" quat="0.830241 0.554769 0.0182893 0.0509566" mass="0.022828" diaginertia="3.78438e-06 3.41587e-06 3.14145e-06" />
+          <joint name="shoulder1_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-1.4 1.4" actuatorfrcrange="-0.39 0.39" frictionloss="0.1" />
+          <geom type="mesh" rgba="0.75294 0.75294 0.75294 1" mesh="shoulder1_link" />
+          <body name="leg1_link" pos="-0.0174 0.041 -0.0164">
+            <inertial pos="0.015303 -0.0075022 -0.031486" quat="0.991718 -0.121381 -0.0411625 0.00821591" mass="0.01174" diaginertia="4.05823e-06 3.86047e-06 1.0964e-06" />
+            <joint name="leg1_joint" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.6" actuatorfrcrange="-0.39 0.39" frictionloss="0.1" />
+            <geom type="mesh" rgba="0.10196 0.10196 0.10196 1" mesh="leg1_link" />
+          </body>  
+        </body>
+        <body name="shoulder2_link" pos="0.073327 -0.043967 -0.0097">
+          <inertial pos="-0.00035261 -0.027895 -0.015524" quat="0.55469 0.830308 -0.0504036 -0.0191768" mass="0.022828" diaginertia="3.78439e-06 3.41596e-06 3.14135e-06" />
+          <joint name="shoulder2_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-1.4 1.4" actuatorfrcrange="-0.39 0.39" frictionloss="0.1" />
+          <geom type="mesh" rgba="0.75294 0.75294 0.75294 1" mesh="shoulder2_link" />
+          <body name="leg2_link" pos="-0.0174 -0.041 -0.0164">
+            <inertial pos="0.015303 0.0075097 -0.031486" quat="0.991713 0.121232 -0.0407594 -0.0121008" mass="0.01174" diaginertia="4.05702e-06 3.85955e-06 1.09592e-06" />
+            <joint name="leg2_joint" type="hinge" pos="0 0 0" axis="1 0 0" range="-1.6 0" actuatorfrcrange="-0.39 0.39" frictionloss="0.1" />
+            <geom type="mesh" rgba="0.10196 0.10196 0.10196 1" mesh="leg2_link" />
+          </body>  
+        </body>  
+      </body>
+    </body>
+    
+  </worldbody>
+
+  <sensor>
+    <velocimeter name="velocity" site="tip_sensors" />
+    <framequat name="spinal_quat" objtype="site" objname="spinal_sensors" reftype="body" refname="body_rear_link" />
+    <gyro name="torso_angular_velocity" site="torso_sensors" />
+    <velocimeter name="torso_velocity" site="torso_sensors" />
+    <velocimeter name="front_velocity" site="front_sensors" />
+  </sensor>
+</mujoco>

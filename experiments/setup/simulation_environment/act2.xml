@@ -1,0 +1,15 @@
+<mujoco model="motors">
+  <!-- Existing XML content -->
+  <compiler angle="radian"/>
+  <actuator>
+    <position joint="spinal_joint" kp=".5" ctrlrange="-1.57 1.57" />
+    <position joint="shoulder1_joint" kp=".6" ctrlrange="-1.57 1.57" />
+    <position joint="leg1_joint" kp=".5" ctrlrange="-1.57 1.57" />
+    <position joint="shoulder2_joint" kp=".6" ctrlrange="-1.57 1.57" />
+    <position joint="leg2_joint" kp=".5" ctrlrange="-1.57 1.57" />
+    <position joint="shoulder3_joint" kp=".4" ctrlrange="-1.57 1.57" />
+    <position joint="leg3_joint" kp=".5" ctrlrange="-1.57 1.57" />
+    <position joint="shoulder4_joint" kp=".4" ctrlrange="-1.57 1.57" />
+    <position joint="leg4_joint" kp=".5" ctrlrange="-1.57 1.57" />
+  </actuator>
+</mujoco> 
