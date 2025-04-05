@@ -1,0 +1,20 @@
+<mujoco model="rocky_terrain_scene">
+    <compiler angle="radian" inertiafromgeom="true"/>
+    <option timestep="0.002" gravity="0 0 -9.81"/>
+
+    <!-- World -->
+    <worldbody>
+        <light name="sunlight" pos="5 5 5" dir="-1 -1 -1" diffuse="1 1 1" specular="0.5 0.5 0.5" ambient="0.5 0.5 0.5"/>
+
+        <!-- Ground Plane -->
+        <geom name="ground_plane" type="plane" size="50 50 0.1" rgba="0.3 0.3 0.3 1"/>
+
+        <!-- Rocky Terrain: Many randomly placed and rotated boxes -->
+        <body name="rocky_terrain_body">
+            <!-- Generate many rocks -->
+
+        </body>
+            
+        
+    </worldbody>
+</mujoco>
