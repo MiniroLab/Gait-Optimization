@@ -44,7 +44,7 @@ def hopf_step(x, y, alpha, mu, omega, dt, coupling, x_all, y_all, index, phase_o
 model_path = (
     "c:/Users/chike/Box/TurtleRobotExperiments/"
     "Sea_Turtle_Robot_AI_Powered_Simulations_Project/NnamdiFiles/mujocotest1/"
-    "assets/turtlev1/testrobot1.xml"
+    "assets/Gait-Optimization/turtlev1/xmls/testrobot1.xml"
 )
 model = mujoco.MjModel.from_xml_path(model_path)
 data = mujoco.MjData(model)
@@ -113,8 +113,8 @@ total_mass = np.sum(base_mass)
 # =============================================================================
 #            CPG PARAMETERS & INITIAL OSCILLATOR STATES
 # =============================================================================
-alpha = 10.0       # Convergence speed
-mu = 0.04          # Radius^2
+alpha = 20.0       # Convergence speed
+mu = 1.0          # Radius^2
 a_param = 10.0     # Logistic steepness for frequency blending
 
 # Define stance and swing frequencies (rad/s)
@@ -122,7 +122,7 @@ stance_freq = 2.0
 swing_freq  = 2.0
 
 # Coupling constant (λ)
-lambda_cpl = 0.5
+lambda_cpl = 0.8
 
 # Phase offsets (diagonal phase offsets)
 phase_offsets_d = {
@@ -135,7 +135,7 @@ phase_offsets_d = {
 }
 
 # Phase offsets (sync phase offsets)
-phase_offsets = {
+phase_offsets_s = {
     "pos_frontleftflipper":  0.0,
     "pos_frontrightflipper": 0.0,
     "pos_backleft":          0.0,
@@ -143,6 +143,8 @@ phase_offsets = {
     "pos_frontlefthip":      0.75,
     "pos_frontrighthip":     0.75
 }
+
+phase_offsets = phase_offsets_s  # Choose sync or diagonal phase offsets
 
 # Initialize oscillator states
 oscillators = {}
@@ -164,19 +166,19 @@ def map_oscillator_to_joint(x_val, min_angle, max_angle):
     return desired_angle
 
 joint_output_map = {
-    "pos_frontleftflipper":  {"offset": 0, "gain": 3.5},
-    "pos_frontrightflipper": {"offset": 0, "gain": 3.5},
-    "pos_backleft":          {"offset": 0, "gain": 2},
-    "pos_backright":         {"offset": 0, "gain": 2},
-    "pos_frontlefthip":      {"offset": 0, "gain": 3.5},
-    "pos_frontrighthip":     {"offset": 0, "gain": 3.5}
+    "pos_frontleftflipper":  {"offset": 0, "gain": 1},
+    "pos_frontrightflipper": {"offset": 0, "gain": 1},
+    "pos_backleft":          {"offset": 0, "gain": 1},
+    "pos_backright":         {"offset": 0, "gain": 1},
+    "pos_frontlefthip":      {"offset": 0, "gain": 1},
+    "pos_frontrighthip":     {"offset": 0, "gain": 1}
 }
 
 # =============================================================================
 #             SET UP TIME PARAMETERS AND DATA LOGGING
 # =============================================================================
 dt_cpg = 0.001         # CPG time step
-time_duration = 30.0   # Simulation duration (seconds)
+time_duration = 20.0   # Simulation duration (seconds)
 
 # =============================================================================
 #       SIMULATION FUNCTION WITH LOGGING
@@ -225,13 +227,52 @@ def run_simulation_with_logging(params, sim_duration=20.0, seed=42):
     freq_history = {name: [] for name in actuator_names}
 
     start_time = time.time()
+
+    warmup_duration = 4.0  # seconds to stabilize oscillators
+
     with mujoco.viewer.launch_passive(model, data) as viewer:
+        warmup_start = time.time()
+        last_loop_time = warmup_start
+
+        # ------------------ WARM-UP PHASE ------------------
+        print(f"[INFO] Starting warm-up for {warmup_duration}s...")
+        while viewer.is_running():
+            now = time.time()
+            sim_time = now - warmup_start
+            loop_dt = now - last_loop_time
+            last_loop_time = now
+            if sim_time >= warmup_duration:
+                print("[INFO] Warm-up complete. Starting main logging phase.")
+                break
+
+            steps = int(np.floor(loop_dt / dt_cpg))
+            for _ in range(steps):
+                x_all = [oscillators[name]["x"] for name in actuator_names]
+                y_all = [oscillators[name]["y"] for name in actuator_names]
+                for i, name in enumerate(actuator_names):
+                    x_i = oscillators[name]["x"]
+                    y_i = oscillators[name]["y"]
+                    freq = (stance_freq / (1.0 + np.exp(-a_param * y_i))) + \
+                        (swing_freq  / (1.0 + np.exp(a_param * y_i)))
+                    x_new, y_new = hopf_step(x_i, y_i, alpha, mu, freq, dt_cpg,
+                                            lambda_cpl, x_all, y_all, i, phase_offsets)
+                    oscillators[name]["x"] = x_new
+                    oscillators[name]["y"] = y_new
+            mujoco.mj_step(model, data)
+            viewer.sync()
+
+        # ------------------ MAIN SIMULATION ------------------
+        start_time = time.time()
+        last_loop_time = start_time
         while viewer.is_running():
             now = time.time()
             sim_time = now - start_time
             if sim_time >= sim_duration:
+                print(f"[INFO] Reached {sim_duration:.1f}s of simulation. Stopping.")
                 break
 
+            loop_dt = now - last_loop_time
+            last_loop_time = now
             steps = int(np.floor((sim_time - (time_data[-1] if time_data else 0)) / dt_cpg))
             for _ in range(steps):
                 x_all = [oscillators[name]["x"] for name in actuator_names]
@@ -239,12 +280,11 @@ def run_simulation_with_logging(params, sim_duration=20.0, seed=42):
                 for i, name in enumerate(actuator_names):
                     x_i = oscillators[name]["x"]
                     y_i = oscillators[name]["y"]
-                    # Compute instantaneous frequency for this joint
                     freq = (stance_freq / (1.0 + np.exp(-a_param * y_i))) + \
-                           (swing_freq  / (1.0 + np.exp(a_param * y_i)))
+                        (swing_freq  / (1.0 + np.exp(a_param * y_i)))
                     freq_history[name].append(freq)
                     x_new, y_new = hopf_step(x_i, y_i, alpha, mu, freq, dt_cpg,
-                                             lambda_cpl, x_all, y_all, i, phase_offsets)
+                                            lambda_cpl, x_all, y_all, i, phase_offsets)
                     oscillators[name]["x"] = x_new
                     oscillators[name]["y"] = y_new
 
@@ -257,6 +297,7 @@ def run_simulation_with_logging(params, sim_duration=20.0, seed=42):
                 desired_angle = off + amp_factor * np.tanh(oscillators[name]["x"])
                 desired_angle_clamped = np.clip(desired_angle, min_angle, max_angle)
                 data.ctrl[actuator_indices[name]] = desired_angle_clamped
+
             mujoco.mj_step(model, data)
             viewer.sync()
 
@@ -273,6 +314,7 @@ def run_simulation_with_logging(params, sim_duration=20.0, seed=42):
             for i, name in enumerate(actuator_names):
                 actuator_torque_history[name].append(data.actuator_force[actuator_indices[name]])
                 joint_velocity_history[name].append(qvel[actuator_indices[name]])
+
 
     # After simulation, print frequency statistics for each joint.
     print("\n=== Frequency Statistics per Joint ===")
@@ -303,7 +345,7 @@ def run_simulation_with_logging(params, sim_duration=20.0, seed=42):
 # =============================================================================
 # We use Latin Hypercube Sampling (LHS) to generate N experiments in a 7D space.
 d = 7  # number of parameters
-N = 70 # number of experiments (heuristic: 10x the number of dimensions)
+N = 30 # number of experiments (heuristic: 10x the number of dimensions)
 
 sampler = qmc.LatinHypercube(d=d)
 lhs_samples = sampler.random(n=N)  # shape (N, 7) in [0,1]^7
@@ -312,7 +354,7 @@ lhs_samples = sampler.random(n=N)  # shape (N, 7) in [0,1]^7
 # [stance_freq, swing_freq, a_param, lambda_cpl, A_front, A_back, A_hip]
 bounds = np.array([
     [0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0],  # lower bounds
-    [6.0, 6.0, 20.0, 1.0, 5.0, 5.0, 5.0]   # upper bounds
+    [6.0, 6.0, 20.0, 1.0, 2.0, 2.0, 2.0]   # upper bounds
 ])
 # Scale the LHS samples to the desired bounds:
 param_samples = qmc.scale(lhs_samples, bounds[0, :], bounds[1, :])
@@ -386,5 +428,5 @@ for i in range(N):
 
 # Save the results to a CSV file
 df = pd.DataFrame(results_list)
-df.to_csv("lhs_simulation_results_sync.csv", index=False)
-print("Results saved to lhs_simulation_results_sync.csv")
+df.to_csv(r"C:\Users\chike\Box\TurtleRobotExperiments\Sea_Turtle_Robot_AI_Powered_Simulations_Project\NnamdiFiles\mujocotest1\assets\Gait-Optimization\data\lhs_simulation_results_sync.csv", index=False)
+print("Results saved to lhs_simulation_results_sync_2.csv")

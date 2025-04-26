@@ -48,7 +48,7 @@ def hopf_step(x, y, alpha, mu, omega, dt, coupling, x_all, y_all, index, phase_o
 model_path = (
     "c:/Users/chike/Box/TurtleRobotExperiments/"
     "Sea_Turtle_Robot_AI_Powered_Simulations_Project/NnamdiFiles/mujocotest1/"
-    "assets/turtlev1/testrobot1.xml"
+    "assets/Gait-Optimization/turtlev1/xmls/testrobot1.xml"
 )
 model = mujoco.MjModel.from_xml_path(model_path)
 data = mujoco.MjData(model)
@@ -121,21 +121,22 @@ total_mass = np.sum(base_mass)
 # =============================================================================
 #            CPG PARAMETERS & INITIAL OSCILLATOR STATES
 # =============================================================================
-alpha = 10.0       # Convergence speed
-mu = 1         # Radius^2 (amplitude ~ sqrt(0.04)=0.2)
+alpha = 20.0       # Convergence speed
+mu = 1.0        # Radius^2 (amplitude ~ sqrt(0.04)=0.2)
 a_param = 10.0     # Logistic steepness for frequency blending
 
 # Define stance and swing frequencies (rad/s)
-stance_freq = 2.0
-swing_freq  = 2.0
+stance_freq = 3.0
+swing_freq  = 4.0
 
 # Single coupling constant for all joints (λ)
-lambda_cpl = 0.5
+lambda_cpl = 0.8
+# Coupling strength (λ) for the Hopf oscillators    
 
 # Define phase offsets (as fractions; 1 corresponds to 2π)
 
 # phase_offsets = [0.0, 0.0, 0.0, 0.0, 0.75, 0.75] # sync phase offsets
-phase_offsets_d = {
+phase_offsets_s = {
     "pos_frontleftflipper":  0.0,
     "pos_frontrightflipper": 0.0,
     "pos_backleft":          0.0,
@@ -145,7 +146,7 @@ phase_offsets_d = {
 }
 
 # phase_offsets = [0.0, 0.5, 0.5, 0.0, 0.25, 0.75] # diag phase offsets
-phase_offsets_s = {
+phase_offsets_d = {
     "pos_frontleftflipper":  0.0,
     "pos_frontrightflipper": 0.5,
     "pos_backleft":          0.5,
@@ -154,7 +155,7 @@ phase_offsets_s = {
     "pos_frontrighthip":     0.25
 }
 
-phase_offsets = phase_offsets_d
+phase_offsets = phase_offsets_s  # Choose one of the above phase offset sets
 
 # Initialize oscillator states for each joint with the desired phase offsets.
 oscillators = {}
@@ -182,12 +183,12 @@ def map_oscillator_to_joint(x_val, min_angle, max_angle):
 
 # Optionally, you can define a joint_output_map dictionary if you want custom gains/offsets:
 joint_output_map = {
-    "pos_frontleftflipper":  {"offset": 0, "gain": 1},
-    "pos_frontrightflipper": {"offset": 0, "gain": 1},
+    "pos_frontleftflipper":  {"offset": 0, "gain": 2},
+    "pos_frontrightflipper": {"offset": 0, "gain": 2},
     "pos_backleft":          {"offset": 0, "gain": 1},
     "pos_backright":         {"offset": 0, "gain": 1},
-    "pos_frontlefthip":      {"offset": 0, "gain": 1},
-    "pos_frontrighthip":     {"offset": 0, "gain": 1}
+    "pos_frontlefthip":      {"offset": 0, "gain": 2},
+    "pos_frontrighthip":     {"offset": 0, "gain": 2}
 }
 
 # =============================================================================
@@ -230,14 +231,68 @@ base_imu_map = {
 
 actuator_torque_history = {name: [] for name in actuator_names}
 joint_velocity_history  = {name: [] for name in actuator_names}
+cpg_history_x = {name: [] for name in actuator_names}
+cpg_history_y = {name: [] for name in actuator_names}
+
 
 # =============================================================================
-#                        MAIN SIMULATION LOOP
+#                      MAIN SIMULATION LOOP WITH WARM-UP
 # =============================================================================
+
+warmup_duration = 4.0  # seconds to allow oscillators to stabilize
+
 with mujoco.viewer.launch_passive(model, data) as viewer:
+    # ---------------------------
+    # 1. WARM-UP PHASE
+    # ---------------------------
+    warmup_start = time.time()
+    last_loop_time = warmup_start
+    print(f"Starting warm-up phase ({warmup_duration}s)...")
+
+    while viewer.is_running():
+        now = time.time()
+        sim_time = now - warmup_start
+        loop_dt = now - last_loop_time
+        last_loop_time = now
+
+        if sim_time >= warmup_duration:
+            print("Warm-up phase complete. Starting logging...")
+            break
+
+        steps = int(np.floor(loop_dt / dt_cpg))
+        for _ in range(steps):
+            x_all = [oscillators[name]["x"] for name in actuator_names]
+            y_all = [oscillators[name]["y"] for name in actuator_names]
+            for i, name in enumerate(actuator_names):
+                x_i = oscillators[name]["x"]
+                y_i = oscillators[name]["y"]
+                freq = (stance_freq / (1.0 + np.exp(-a_param * y_i))) + \
+                       (swing_freq  / (1.0 + np.exp(a_param * y_i)))
+                x_new, y_new = hopf_step(x_i, y_i, alpha, mu, freq, dt_cpg,
+                                         lambda_cpl, x_all, y_all, i, phase_offsets)
+                oscillators[name]["x"] = x_new
+                oscillators[name]["y"] = y_new
+        mujoco.mj_step(model, data)
+        viewer.sync()
+
+    # Reset timers and clear logs
     start_time = time.time()
     last_loop_time = start_time
 
+    time_data = []
+    ctrl_data = {name: [] for name in actuator_names}
+    cpg_outputs = {name: [] for name in actuator_names}
+    com_positions = []
+    body_orientations = []
+    power_consumption = []
+    actuator_torque_history = {name: [] for name in actuator_names}
+    joint_velocity_history  = {name: [] for name in actuator_names}
+    cpg_history_x = {name: [] for name in actuator_names}
+    cpg_history_y = {name: [] for name in actuator_names}
+
+    # ---------------------------
+    # 2. MAIN SIMULATION PHASE
+    # ---------------------------
     while viewer.is_running():
         now = time.time()
         sim_time = now - start_time
@@ -248,9 +303,6 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
             print(f"Reached {time_duration:.1f} s of simulation. Stopping.")
             break
 
-        # ------------------------------------------------------------
-        # 1) Integrate the Hopf oscillators using multiple sub-steps.
-        # ------------------------------------------------------------
         steps = int(np.floor(loop_dt / dt_cpg))
         for _ in range(steps):
             x_all = [oscillators[name]["x"] for name in actuator_names]
@@ -258,74 +310,142 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
             for i, name in enumerate(actuator_names):
                 x_i = oscillators[name]["x"]
                 y_i = oscillators[name]["y"]
-                # Compute instantaneous frequency based on y_i (logistic blending)
                 freq = (stance_freq / (1.0 + np.exp(-a_param * y_i))) + \
                        (swing_freq  / (1.0 + np.exp(a_param * y_i)))
                 x_new, y_new = hopf_step(x_i, y_i, alpha, mu, freq, dt_cpg,
                                          lambda_cpl, x_all, y_all, i, phase_offsets)
                 oscillators[name]["x"] = x_new
                 oscillators[name]["y"] = y_new
+                cpg_history_x[name].append(x_new)
+                cpg_history_y[name].append(y_new)
 
-        # ------------------------------------------------------------
-        # 2) Map oscillator outputs to joint control commands (full-range mapping)
-        # ------------------------------------------------------------
-        # Here we use the inherent phase relationships from the CPG network.
         for name in actuator_names:
             min_angle, max_angle = joint_limits[name]
-            # Option 1: Use direct mapping (if you want to use the oscillator x output)
-            # desired_angle = map_oscillator_to_joint(oscillators[name]["x"], min_angle, max_angle)
-            # Option 2: Alternatively, use a custom mapping (e.g., with joint_output_map) if desired:
-            amplitude = np.sqrt(mu)
-
             offset = joint_output_map[name]["offset"]
             gain = joint_output_map[name]["gain"]
             desired_angle = offset + gain * np.tanh(oscillators[name]["x"])
-    
-            # desired_angle = offset + gain * oscillators[name]["x"]
-            # desired_angle = offset + gain * (oscillators[name]["x"] / amplitude)
             desired_angle_clamped = np.clip(desired_angle, min_angle, max_angle)
             data.ctrl[actuator_indices[name]] = desired_angle_clamped
             cpg_outputs[name].append(desired_angle_clamped)
 
         time_data.append(sim_time)
-
-        # ------------------------------------------------------------
-        # 3) Step the MuJoCo simulation and collect performance data.
-        # ------------------------------------------------------------
         mujoco.mj_step(model, data)
 
-        # Record control signals:
         for name in actuator_names:
             ctrl_data[name].append(data.ctrl[actuator_indices[name]])
-        # (a) COM position:
         com_positions.append(data.xpos[main_body_id].copy())
-        # (b) Orientation (rotation matrix):
         body_orientations.append(data.xmat[main_body_id].copy())
-        # (c) Mechanical power (using absolute torque * absolute joint velocity):
         qvel = data.qvel[:model.nu]
         torque = data.actuator_force[:model.nu]
         instant_power = np.sum(np.abs(torque) * np.abs(qvel))
         power_consumption.append(instant_power)
-        # (d) Joint torque sensors:
-        for varname, sname in jointact_sensor_map.items():
-            val = get_sensor_data(data, model, sensor_name2id, sname)
-            if val is not None:
-                sensor_data_history[varname].append(val[0])
-        # (e) Base IMU data:
-        for varname, sname in base_imu_map.items():
-            val = get_sensor_data(data, model, sensor_name2id, sname)
-            if val is not None:
-                sensor_data_history[varname].append(val.copy())
-        # (f) Actuator torques:
         for name in actuator_names:
             idx = actuator_indices[name]
             actuator_torque_history[name].append(data.actuator_force[idx])
-        # (g) Joint velocities:
-        for name in actuator_names:
-            idx = actuator_indices[name]
             joint_velocity_history[name].append(qvel[idx])
 
         viewer.sync()
+
+
+
+# # =============================================================================
+# #                        MAIN SIMULATION LOOP
+# # =============================================================================
+# with mujoco.viewer.launch_passive(model, data) as viewer:
+#     start_time = time.time()
+#     last_loop_time = start_time
+
+#     while viewer.is_running():
+#         now = time.time()
+#         sim_time = now - start_time
+#         loop_dt = now - last_loop_time
+#         last_loop_time = now
+
+#         if sim_time >= time_duration:
+#             print(f"Reached {time_duration:.1f} s of simulation. Stopping.")
+#             break
+
+#         # ------------------------------------------------------------
+#         # 1) Integrate the Hopf oscillators using multiple sub-steps.
+#         # ------------------------------------------------------------
+#         steps = int(np.floor(loop_dt / dt_cpg))
+#         for _ in range(steps):
+#             x_all = [oscillators[name]["x"] for name in actuator_names]
+#             y_all = [oscillators[name]["y"] for name in actuator_names]
+#             for i, name in enumerate(actuator_names):
+#                 x_i = oscillators[name]["x"]
+#                 y_i = oscillators[name]["y"]
+#                 # Compute instantaneous frequency based on y_i (logistic blending)
+#                 freq = (stance_freq / (1.0 + np.exp(-a_param * y_i))) + \
+#                        (swing_freq  / (1.0 + np.exp(a_param * y_i)))
+#                 x_new, y_new = hopf_step(x_i, y_i, alpha, mu, freq, dt_cpg,
+#                                          lambda_cpl, x_all, y_all, i, phase_offsets)
+#                 oscillators[name]["x"] = x_new
+#                 oscillators[name]["y"] = y_new
+#                 cpg_history_x[name].append(x_new)  # store the x component 
+#                 cpg_history_y[name].append(x_new)  # store the y component 
+
+
+#         # ------------------------------------------------------------
+#         # 2) Map oscillator outputs to joint control commands (full-range mapping)
+#         # ------------------------------------------------------------
+#         # Here we use the inherent phase relationships from the CPG network.
+#         for name in actuator_names:
+#             min_angle, max_angle = joint_limits[name]
+#             # Option 1: Use direct mapping (if you want to use the oscillator x output)
+#             # desired_angle = map_oscillator_to_joint(oscillators[name]["x"], min_angle, max_angle)
+#             # Option 2: Alternatively, use a custom mapping (e.g., with joint_output_map) if desired:
+#             amplitude = np.sqrt(mu)
+
+#             offset = joint_output_map[name]["offset"]
+#             gain = joint_output_map[name]["gain"]
+#             desired_angle = offset + gain * np.tanh(oscillators[name]["x"])
+    
+#             # desired_angle = offset + gain * oscillators[name]["x"]
+#             # desired_angle = offset + gain * (oscillators[name]["x"] / amplitude)
+#             desired_angle_clamped = np.clip(desired_angle, min_angle, max_angle)
+#             data.ctrl[actuator_indices[name]] = desired_angle_clamped
+#             cpg_outputs[name].append(desired_angle_clamped)
+
+#         time_data.append(sim_time)
+
+#         # ------------------------------------------------------------
+#         # 3) Step the MuJoCo simulation and collect performance data.
+#         # ------------------------------------------------------------
+#         mujoco.mj_step(model, data)
+
+#         # Record control signals:
+#         for name in actuator_names:
+#             ctrl_data[name].append(data.ctrl[actuator_indices[name]])
+#         # (a) COM position:
+#         com_positions.append(data.xpos[main_body_id].copy())
+#         # (b) Orientation (rotation matrix):
+#         body_orientations.append(data.xmat[main_body_id].copy())
+#         # (c) Mechanical power (using absolute torque * absolute joint velocity):
+#         qvel = data.qvel[:model.nu]
+#         torque = data.actuator_force[:model.nu]
+#         instant_power = np.sum(np.abs(torque) * np.abs(qvel))
+#         power_consumption.append(instant_power)
+#         # (d) Joint torque sensors:
+#         for varname, sname in jointact_sensor_map.items():
+#             val = get_sensor_data(data, model, sensor_name2id, sname)
+#             if val is not None:
+#                 sensor_data_history[varname].append(val[0])
+#         # (e) Base IMU data:
+#         for varname, sname in base_imu_map.items():
+#             val = get_sensor_data(data, model, sensor_name2id, sname)
+#             if val is not None:
+#                 sensor_data_history[varname].append(val.copy())
+#         # (f) Actuator torques:
+#         for name in actuator_names:
+#             idx = actuator_indices[name]
+#             actuator_torque_history[name].append(data.actuator_force[idx])
+#         # (g) Joint velocities:
+#         for name in actuator_names:
+#             idx = actuator_indices[name]
+#             joint_velocity_history[name].append(qvel[idx])
+
+#         viewer.sync()
 
 # =============================================================================
 #                     PERFORMANCE ANALYSIS & PLOTS
@@ -387,52 +507,62 @@ axs[0, 0].set_ylabel("Joint Angle (rad)")
 axs[0, 0].legend()
 axs[0, 0].grid(True)
 
-# (0,1): COM Position vs Time (X, Y, Z)
-com_arr = np.array(com_positions)
-if len(com_arr) > 0:
-    axs[0, 1].plot(time_data, com_arr[:, 0], label="COM X")
-    axs[0, 1].plot(time_data, com_arr[:, 1], label="COM Y")
-    axs[0, 1].plot(time_data, com_arr[:, 2], label="COM Z")
-axs[0, 1].set_title("COM Position vs Time")
-axs[0, 1].set_xlabel("Time (s)")
-axs[0, 1].set_ylabel("Position (m)")
+
+# (0,1): CPG Oscillator Outputs Over Time
+for name in actuator_names:
+    axs[0, 1].plot(range(len(cpg_history_y[name])), cpg_history_y[name], label=name)
+axs[0, 1].set_title("CPG Oscillator Outputs Over Time")
+axs[0, 1].set_xlabel("Time Step")
+axs[0, 1].set_ylabel("Oscillator x Output")
 axs[0, 1].legend()
 axs[0, 1].grid(True)
 
-# (1,0): Instantaneous Power Consumption
-axs[1, 0].plot(time_data, power_consumption, label="Instant Power")
-axs[1, 0].set_title("Instantaneous Power Consumption")
+# (1,0): COM Position vs Time (X, Y, Z)
+com_arr = np.array(com_positions)
+if len(com_arr) > 0:
+    axs[1, 0].plot(time_data, com_arr[:, 0], label="COM X")
+    axs[1, 0].plot(time_data, com_arr[:, 1], label="COM Y")
+    axs[1, 0].plot(time_data, com_arr[:, 2], label="COM Z")
+axs[1, 0].set_title("COM Position vs Time")
 axs[1, 0].set_xlabel("Time (s)")
-axs[1, 0].set_ylabel("Power (W)")
+axs[1, 0].set_ylabel("Position (m)")
 axs[1, 0].legend()
 axs[1, 0].grid(True)
 
-# (1,1): Trajectory (X vs Y)
-if len(com_arr) > 0:
-    axs[1, 1].plot(com_arr[:, 0], com_arr[:, 1], 'b-', label="Trajectory")
-axs[1, 1].set_title("Trajectory (X vs Y)")
-axs[1, 1].set_xlabel("X (m)")
-axs[1, 1].set_ylabel("Y (m)")
+# (1,1): Instantaneous Power Consumption
+axs[1, 1].plot(time_data, power_consumption, label="Instant Power")
+axs[1, 1].set_title("Instantaneous Power Consumption")
+axs[1, 1].set_xlabel("Time (s)")
+axs[1, 1].set_ylabel("Power (W)")
 axs[1, 1].legend()
 axs[1, 1].grid(True)
 
-# (2,0): Actuator Torque Over Time
-for name in actuator_names:
-    axs[2, 0].plot(time_data, actuator_torque_history[name], label=name)
-axs[2, 0].set_title("Actuator Torque Over Time")
-axs[2, 0].set_xlabel("Time (s)")
-axs[2, 0].set_ylabel("Torque (Nm)")
+# (2, 0): Trajectory (X vs Y)
+if len(com_arr) > 0:
+    axs[2, 0].plot(com_arr[:, 0], com_arr[:, 1], 'b-', label="Trajectory")
+axs[2, 0].set_title("Trajectory (X vs Y)")
+axs[2, 0].set_xlabel("X (m)")
+axs[2, 0].set_ylabel("Y (m)")
 axs[2, 0].legend()
 axs[2, 0].grid(True)
 
-# (2,1): Joint Velocity Over Time
+# (2,1): Actuator Torque Over Time
 for name in actuator_names:
-    axs[2, 1].plot(time_data, joint_velocity_history[name], label=name)
-axs[2, 1].set_title("Joint Velocity Over Time")
+    axs[2, 1].plot(time_data, actuator_torque_history[name], label=name)
+axs[2, 1].set_title("Actuator Torque Over Time")
 axs[2, 1].set_xlabel("Time (s)")
-axs[2, 1].set_ylabel("Velocity (rad/s)")
+axs[2, 1].set_ylabel("Torque (Nm)")
 axs[2, 1].legend()
 axs[2, 1].grid(True)
+
+# # (2,1): Joint Velocity Over Time
+# for name in actuator_names:
+#     axs[2, 1].plot(time_data, joint_velocity_history[name], label=name)
+# axs[2, 1].set_title("Joint Velocity Over Time")
+# axs[2, 1].set_xlabel("Time (s)")
+# axs[2, 1].set_ylabel("Velocity (rad/s)")
+# axs[2, 1].legend()
+# axs[2, 1].grid(True)
 
 plt.tight_layout()
 plt.show()
