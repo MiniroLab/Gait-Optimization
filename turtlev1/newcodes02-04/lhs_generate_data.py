@@ -5,6 +5,8 @@ import mujoco.viewer
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import qmc
+from pathlib import Path
+
 
 # =============================================================================
 #                           HOPF OSCILLATOR DYNAMICS
@@ -48,6 +50,12 @@ model_path = (
 )
 model = mujoco.MjModel.from_xml_path(model_path)
 data = mujoco.MjData(model)
+
+
+data_path = Path(
+    "C:/Users/chike/Box/TurtleRobotExperiments/Sea_Turtle_Robot_AI_Powered_Simulations_Project/"
+    "NnamdiFiles/mujocotest1/assets/Gait-Optimization/data"
+)
 
 # =============================================================================
 #         SENSOR & ACTUATOR LOOKUP
@@ -144,7 +152,7 @@ phase_offsets_s = {
     "pos_frontrighthip":     0.75
 }
 
-phase_offsets = phase_offsets_s  # Choose sync or diagonal phase offsets
+phase_offsets = phase_offsets_d  # Choose sync or diagonal phase offsets
 
 # Initialize oscillator states
 oscillators = {}
@@ -347,8 +355,8 @@ def run_simulation_with_logging(params, sim_duration=20.0, seed=42):
 d = 7  # number of parameters
 N = 30 # number of experiments (heuristic: 10x the number of dimensions)
 
-sampler = qmc.LatinHypercube(d=d)
-lhs_samples = sampler.random(n=N)  # shape (N, 7) in [0,1]^7
+# sampler = qmc.LatinHypercube(d=d)
+# lhs_samples = sampler.random(n=N)  # shape (N, 7) in [0,1]^7
 
 # Define the bounds for each parameter:
 # [stance_freq, swing_freq, a_param, lambda_cpl, A_front, A_back, A_hip]
@@ -356,77 +364,86 @@ bounds = np.array([
     [0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0],  # lower bounds
     [6.0, 6.0, 20.0, 1.0, 2.0, 2.0, 2.0]   # upper bounds
 ])
-# Scale the LHS samples to the desired bounds:
-param_samples = qmc.scale(lhs_samples, bounds[0, :], bounds[1, :])
+
+num_datasets = 10   # Generate 10 data sets
 
 # =============================================================================
 #           RUN TRIALS OVER LHS SAMPLES AND SAVE RESULTS TO CSV
 # =============================================================================
-results_list = []
-dt_integration = dt_cpg
 
-for i in range(N):
-    params = param_samples[i]
-    print(f"Running trial {i+1}/{N} with parameters: {params}")
-    # Run simulation for a fixed test duration (e.g., 10 s)
-    log_data = run_simulation_with_logging(params, sim_duration=20.0, seed=42)
+for seed_val in range(1, num_datasets + 1):
+    print(f"\n--- Generating data set with LHS seed {seed_val} ---")
+    # Create an LHS sampler with current seed.
+    sampler = qmc.LatinHypercube(d=d, seed=seed_val)
+    lhs_samples = sampler.random(n=N)  # samples in [0,1]^7
+    # Scale samples to desired bounds.
+    param_samples = qmc.scale(lhs_samples, bounds[0, :], bounds[1, :])
     
-    # Compute metrics:
-    # Time Duration
-    time_duration_trial = 20.0
-    # COM positions:
-    com_positions = np.array(log_data["com_positions"])
-    if len(com_positions) > 1:
-        displacement = com_positions[-1] - com_positions[0]
-        straight_line_distance = np.linalg.norm(displacement)
-        avg_forward_speed = (com_positions[-1][0] - com_positions[0][0]) / time_duration_trial
-        # Lateral deviation in Y (standard deviation)
-        lateral_deviation = np.std(com_positions[:, 1])
-    else:
-        straight_line_distance = 0.0
-        avg_forward_speed = 0.0
-        lateral_deviation = 0.0
-    
-    total_energy = np.sum(log_data["power_consumption"]) * dt_integration
-    weight = total_mass * 9.81
-    if straight_line_distance > 0.01:
-        cost_of_transport = total_energy / (weight * straight_line_distance)
-    else:
-        cost_of_transport = np.nan
-    
-    total_COM_displacement = straight_line_distance
-    
-    # Average frequency: average over all joints' instantaneous frequencies
-    freq_history = log_data["freq_history"]
-    joint_freqs = []
-    for name in actuator_names:
-        if freq_history[name]:
-            joint_freqs.append(np.mean(freq_history[name]))
-    if joint_freqs:
-        avg_frequency = np.mean(joint_freqs)
-    else:
-        avg_frequency = 0.0
+    results_list = []
+    dt_integration = dt_cpg
 
-    results_list.append({
-        "Trial": i+1,
-        "stance_freq": params[0],
-        "swing_freq": params[1],
-        "a_param": params[2],
-        "lambda_cpl": params[3],
-        "A_front": params[4],
-        "A_back": params[5],
-        "A_hip": params[6],
-        "Time_Duration": time_duration_trial,
-        "Straight_line_distance": straight_line_distance,
-        "Average_Forward_Speed": avg_forward_speed,
-        "Average_Lateral_Deviation": lateral_deviation,
-        "Total_Energy_Consumed": total_energy,
-        "Cost_of_Transport": cost_of_transport,
-        "Total_COM_Displacement": total_COM_displacement,
-        "Average_Frequency": avg_frequency
-    })
+    for i in range(N):
+        params = param_samples[i]
+        print(f"Dataset seed {seed_val}: Running trial {i+1}/{N} with parameters: {params}")
+        # Run simulation with the same seed as the dataset seed.
+        log_data = run_simulation_with_logging(params, sim_duration=20.0, seed=seed_val)
+        
+        # Compute metrics:
+        # Time Duration
+        time_duration_trial = 20.0
+        # COM positions:
+        com_positions = np.array(log_data["com_positions"])
+        if len(com_positions) > 1:
+            displacement = com_positions[-1] - com_positions[0]
+            straight_line_distance = np.linalg.norm(displacement)
+            avg_forward_speed = (com_positions[-1][0] - com_positions[0][0]) / time_duration_trial
+            # Lateral deviation in Y (standard deviation)
+            lateral_deviation = np.std(com_positions[:, 1])
+        else:
+            straight_line_distance = 0.0
+            avg_forward_speed = 0.0
+            lateral_deviation = 0.0
+        
+        total_energy = np.sum(log_data["power_consumption"]) * dt_integration
+        weight = total_mass * 9.81
+        if straight_line_distance > 0.01:
+            cost_of_transport = total_energy / (weight * straight_line_distance)
+        else:
+            cost_of_transport = np.nan
+        
+        total_COM_displacement = straight_line_distance
+        
+        # Average frequency: average over all joints' instantaneous frequencies
+        freq_history = log_data["freq_history"]
+        joint_freqs = []
+        for name in actuator_names:
+            if freq_history[name]:
+                joint_freqs.append(np.mean(freq_history[name]))
+        if joint_freqs:
+            avg_frequency = np.mean(joint_freqs)
+        else:
+            avg_frequency = 0.0
 
-# Save the results to a CSV file
-df = pd.DataFrame(results_list)
-df.to_csv(r"C:\Users\chike\Box\TurtleRobotExperiments\Sea_Turtle_Robot_AI_Powered_Simulations_Project\NnamdiFiles\mujocotest1\assets\Gait-Optimization\data\lhs_simulation_results_sync.csv", index=False)
-print("Results saved to lhs_simulation_results_sync_2.csv")
+        results_list.append({
+            "Trial": i+1,
+            "stance_freq": params[0],
+            "swing_freq": params[1],
+            "a_param": params[2],
+            "lambda_cpl": params[3],
+            "A_front": params[4],
+            "A_back": params[5],
+            "A_hip": params[6],
+            "Time_Duration": time_duration_trial,
+            "Straight_line_distance": straight_line_distance,
+            "Average_Forward_Speed": avg_forward_speed,
+            "Average_Lateral_Deviation": lateral_deviation,
+            "Total_Energy_Consumed": total_energy,
+            "Cost_of_Transport": cost_of_transport,
+            "Total_COM_Displacement": total_COM_displacement,
+            "Average_Frequency": avg_frequency
+        })
+
+    df = pd.DataFrame(results_list)
+    file_name = f"lhs_simulation_results_diag_set_{seed_val}.csv"
+    df.to_csv(data_path / file_name, index=False)
+    print(f"Results saved to {file_name}")
